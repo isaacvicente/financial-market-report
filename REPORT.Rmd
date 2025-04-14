@@ -161,9 +161,9 @@ A seguir, iremos utilizar a função Variance Inflation Factor(VIF) para podermo
 #install.packages("car")
 library(dplyr)
 library(car)
-modelo_vif <- lm(Retorno ~ Taxa_juros + Volatilidade + Liquidez + Volume + PE_ratio + Beta + Risco, data = dados_limpos)
+modelo <- lm(Retorno ~ Taxa_juros + Volatilidade + Liquidez + Volume + PE_ratio + Beta + Risco, data = dados_limpos)
 
-vif(modelo_vif)
+vif(modelo)
 ```
 
 Portanto, a partir da análise do VIF podemos tirar algumas conclusões sobre as nossas variáveis:
@@ -280,50 +280,84 @@ Baseado nas seções anteriores temos o seguinte:
 
 Baseado na análise acima, podemos concluir que o modelo com Setor (e sem Risco) melhor se ajusta e é o modelo desejável.
 
-# 6 Análise de Resíduos / Checando pressupostos
+## 5.3 Escolha do modelo `mod_final`
 
-Análise de resíduos deve ser realizada sobre o modelo selecionado. Para nossa base de dados, o modelo `modelo_com_setor`.
-
-## 6.1 Checando pressupostos com R `base`
+A partir de agora, nos referiremos ao modelo escolhido, ou seja, o modelo **sem risco e com setor**, como `modelo_final`.
+Com isso podemos realizar mais análises e comparar o modelo escolhido com o modelo original.
 
 ```{r}
-plot(modelo_com_setor)
+modelo_final <- mod_com_setor
 ```
 
-## 6.2 Checando pressupostos com o pacote `easystats`
+# 6 Análise de Resíduos / Checando pressupostos
 
-### 6.2.1 Sobre o modelo completo: `modelo`
+Nessa seção iremos fazer a análise de resíduos e checar pressupostos do modelo original e o modelo de escolha `modelo_final`. Desta forma conseguimos notar uma diferença significativa entre os modelos.
+
+## 6.1 Checando pressupostos com gráficos básicos
+
+### 6.1.1 Modelo final
+
+```{r}
+plot(modelo_final)
+```
+
+Os gráficos de resíduos gerados pelo R base fornecem quatro visualizações importantes:
+
+1. **Resíduos vs Valores Ajustados**: Este gráfico ajuda a verificar a homocedasticidade (variância constante dos resíduos). No nosso caso, os pontos parecem estar distribuídos aleatoriamente em torno de zero, sem padrões claros, o que sugere que o pressuposto de homocedasticidade pode estar sendo atendido.
+2. **Q-Q Plot**: Avalia a normalidade dos resíduos. Os pontos seguem aproximadamente a linha diagonal, indicando que a distribuição dos resíduos é próxima da normal.
+3. **Scale-Location Plot**: Outra forma de avaliar homocedasticidade. A linha vermelha relativamente plana sugere variância constante.
+4. **Resíduos vs Leverage**: Identifica pontos influentes. Não observamos pontos que ultrapassem significativamente as linhas de contorno (linhas tracejadas), indicando ausência de pontos com alta influência.
+
+## 6.2 Análise aprofundada com o pacote `easystats`
+
+### 6.2.1 Normalidade
+
+#### 6.2.1.1 Sobre o modelo sem modificações: `modelo`
 
 ```{r}
 library(easystats)
 
-check_normality(modelo) #%>% plot()
+check_normality(modelo)
 ```
 
-O teste de normalidade indica um p-valor > 0.05, o que sugere que não há evidências fortes contra a normalidade dos resíduos. Isso é positivo, pois muitos testes inferenciais da regressão linear dependem dessa suposição.
+#### 6.2.1.2 Sobre o modelo selecionado: `modelo_final`
 
 ```{r}
-check_heteroscedasticity(modelo) #%>% plot()
+library(easystats)
+
+check_normality(modelo_final)
 ```
 
-O teste retorna um p-valor > 0.05, indicando que não há heteroscedasticidade significativa nos resíduos. A variância parece constante ao longo das predições.
+#### 6.2.1.3 Conclusão
 
-```{r}
-check_outliers(modelo) # %>% plot()
-```
+A partir dos dados fornecidos anteriormente, podemos concluir que a normalidade do modelo continua com $$valor-p$$ maior. Isto significa que 
 
-A função identifica alguns poucos outliers, mas nenhum com influência significativa o suficiente para distorcer os coeficientes do modelo.
+### 6.2.2 Multicolinearidade
 
-```{r}
-check_collinearity(modelo)
-```
+#### 6.2.2.1 Sobre o modelo sem modificações: `modelo`
 
 ```{r}
 check_collinearity(modelo) %>% plot()
 ```
 
+#### 6.2.2.2 Sobre o modelo selecionado: `modelo_final`
+
 ```{r}
-check_autocorrelation(modelo)
+check_collinearity(modelo_final) %>% plot()
 ```
 
+#### 6.2.2.3 Conclusão
+
 # 7 Conclusão
+
+## 7.1 O que considerar num investimento?
+
+Com base em toda a análise que realizamos, é possível concluir que o investidor deve considerar a variável `PE_Ratio` em seus investimentos. Isso porque essa variável mostrou maior correlação com o retorno de uma ativo financeiro.
+
+Ou seja, a razão preço/lucro, que compara o preço da ação com um lucro por ação, deve ter atenção dedobrada de um investidor caso ele queira ter retornos maiores.
+
+# 7.2. O que não considerar num investimento?
+
+De maneira análoga, podemos concluir que o investidor não considere a variável `Risco`, mas sim `Volatilidade`. Isso porque essas duas variáveis tentam explicar o retorno de um ativo, o que pode, além de atrapalhar a análise estatística, o próprio investidor.
+
+Isto é, a medida de variação dos preços de um ativo ao longo do tempo, indicando risco de flutuações é o que deve ser levado em conta.
