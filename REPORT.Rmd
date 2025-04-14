@@ -330,7 +330,7 @@ check_normality(modelo_final)
 
 #### 6.2.1.3 Conclusão
 
-A partir dos dados fornecidos anteriormente, podemos concluir que a normalidade do modelo continua com $$valor-p$$ maior. Isto significa que 
+A partir dos dados fornecidos anteriormente, podemos concluir que a normalidade do modelo continua com $valor-p$ maior. Isto significa que 
 
 ### 6.2.2 Multicolinearidade
 
