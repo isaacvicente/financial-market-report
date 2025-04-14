@@ -1,0 +1,287 @@
+---
+title: "R Notebook - Regrassão Linear Múltipla"
+output: html_notebook
+---
+
+- Isaac Vicente de Medeiros Silva - 122110653\n
+- Winicius Allan Bezerra da Silva - 122110397\n
+- Ronaldd Feliph Matias Costa - 122110574
+
+
+# 1. Introdução
+A partir da base de dados “Mercado_Financeiro.xlsx” temos como objetivo investigar como os fatores influenciam a variável Retorno, que diz respeito ao ganho ou perda financeira obtida a partir de um investimento. Este conjunto de dados inclui diversas variáveis(listar variáveis) que iremos utilizar para traçar um regressão linear múltipla que explique o Retorno.
+
+# 2. Dados
+Os dados que trabalharemos dizem respeito ao mundo do mercado financeiro. Podemos carregá-los da seguinte forma: 
+
+
+```{r}
+library(readxl)
+dados <- read_excel("/Users/isaacvicente/Documents/faculdade/estatistica/relatorio/mercado_financeiro.xlsx")
+head(dados)
+```
+Antes de prosseguirmos, iremos realizar um tratamento na base de dados.
+
+
+```{r}
+library(dplyr)
+
+dados <- dados %>%
+  mutate(across(where(is.numeric), ~ round(., 2)))
+```
+
+```{r}
+dados <- dados %>%
+  filter(!is.na(Retorno))
+```
+
+```{r}
+sum(is.na(dados$Retorno))
+```
+
+Modificações feita na base de dados:
+
+- Formatação de colunas númericas:
+Todas as variáveis quantitativas foram arredondadas para 2 casas decimais para facilitar o manuseio e visualização da base de dados.
+- Remoção dados faltantes na variável Alvo:
+Optamos por remover as linhas da variável "Retorno", evitanto assim problemas futuros.
+
+
+Aqui está uma visão geral de como está o nosso dataframe:
+```{r}
+glimpse(dados)
+```
+
+## 2.1 Estrutura do conjunto de dados
+
+- Taxa_juros: Taxa de juros associada ao investimento ou produto financeiro(em porcentagem).
+- Volatilidade: Medida de variação dos preços de um ativo ao longo do tempo, indicando risco de flutuações (em porcentagem).
+- Liquidez: Facilidade de converter um ativo em dinheiro sem impactar significativamente seu preço (valores percentuais).
+- Volume: Quantidade de negociações ou capital movimentado em um período específico (valor monetário).
+- PE_ratio: Razão Preço/Lucro, que compara o preço da ação com um lucro por ação (valor numérico).
+- Beta: Medida de risco sistemático, indicando correlação com o mercado (valores positivos/negativos refletem tendências).
+- Setor: Categoria do setor econômico do investimento (categórico: Financeiro, Tecnologia, Consumo).
+- Risco: Pontuação numérica que quantifica o risco associado ao investimento.
+- Retorno: Ganho ou perda financeira gerada pelo investimento (valor monetário).
+
+
+## 2.2 Análise exploratória dos dados
+
+```{r}
+library(skimr)
+skim(dados)
+```
+
+### 2.2.1 Interpretação
+- Os resultados obtidos com a função *skim()* indicam que, de acordo com a coluna "n_missing" o dataset possui em torno 21 dados faltantes para todas as variáveis, exceto "Retorno" devido à limpeza que fizemos anteriormente. Com isso, podemos fazer mais uma limpeza no dataset para que possamos trabalhar de forma mais íntegra com os dados.
+- Também foi possível observar alguns outliers, como por exemplo:
+
+  - *Taxa de juros:* A maioria das taxas de juros (50%) estão entre 25.22 (p25) e 46.81 (p75), todavia,  menor valor que é -11.39 (p0) foge um pouco do escopo desse tipo de variável, indicando fortemente que possa haver outliers.
+  - *Volatilidade:* A maioria dos valores de volatilidade (50%) estão entre 21.30 (p25) e 42.83 (p75), todavia, assim como a taxa de juros, o menor valor que é -9.77 foge do escopo desse tipo de variável, indicando também que tenha outliers.
+  - *Risco:* A maioria dos dados de risco (50%) estão entre 22.52 (p25) e 45.51 (p75), todavia o menor valor que é -9.99 (p0) é bastante discrepante, indicando a presença de outliers.
+
+- Importante ressaltar que a presença desses outliers (valores extremos, tanto negativamente quanto positivamente) vai ficar mais claro quando plotarmos um boxblot.
+
+### 2.2.2 Colocando em Prática
+- Tendo em vista a interpretação que tivemos da tabela fornecida pela função *skim()*, é necessário fazer novamente uma limpeza na nossa base de dados, retirando os dados ausente e ficando apenas com os dados íntegros.
+
+```{r}
+dados_limpos <-  dados %>%
+  filter(if_all(-Retorno, ~ !is.na(.)))
+```
+
+```{r}
+skim(dados_limpos)
+```
+Agora que temos os dados tratados, vamos entender de forma mais aprofunda o quanto uma variável influencia na nossa variável alvo (Retorno).
+
+## 3. Análises bivariadas
+Nessa seção iremos fazer uma análise mais detalhada para entender mais de perto as variáveis que estamos trabalhando.
+
+### 3.1 Somente entre variáveis numéricas
+
+```{r}
+# Análise de correlação (exceto variáveis categóricas)
+library(corrplot)
+library(dplyr)
+
+dados_numericos <- dados_limpos %>% select(where(is.numeric)) #  pegando apenas as variáveis numéricas.
+
+matriz_correlacao <- cor(dados_numericos, use = "complete.obs")
+
+corrplot(matriz_correlacao, method = "color", addCoef.col = "black",
+         tl.cex = 0.8, number.cex = 0.7, mar = c(0,0,1,0))
+
+
+```
+A partir dessa matriz de correlação, conseguimos indentificar alguns pontos importantes:
+
+1. A matriz revelou que as variáveis ***PE_ratio***, ***Beta*** e ***Volume*** apresentam uma correlação positiva mais forte com a variável resposta (***Retorno***), sugerindo assim que essas sejam boas preditoras para o nosso modelo de regressão.
+2. Por outro lado, ***Liquidez*** tem correlação negativa com o ***Retorno***, e ***Taxa_juros***, ***Volatilidade*** e ***Risco*** apresentaram correlações fracas ou nulas.
+3. Além disso, não foram observadas correlações altas entre as variáveis explicativas, o que indica ausência de multicolinearidade significativa — um cenário favorável para ajuste de modelos de regressão linear múltipla.
+
+Explicamos em linhas gerais a percepção que a matriz de correlação nos forneceu. Agora, vamos interpretar de fato a variável Retorno em termos práticos. A ideia é entender como o Retorno se comporta quando as demais variáveis aumentam ou diminuem tendo em vista o contexto da base de dados, sem entrar (ainda) em modelos de regressão, só na obsercação da correlação.
+
+- **PE_ratio (Correlação = 0.69)**: Com esse valor, a interpretação que fica é que ativos com maior relação/lucro tendem a ter maior retorno.
+- **Beta (Correlação = 0.49)**: Ativos com maior sensibilidade ao mercado (ou seja, com mais risco de mercado) tendem a entregar retornos mais altos.
+- **Volume (Correlação = 0.45)**: Quanto mais negociado é um ativo (maior volume), maior tente a ser o seu retorno.
+- **Liquidez (Correlação = -0.23)**: Com essa correlação, isso indica que ativos mais líquidos tendem a ter retornos menores.
+- **Taxa_Juros (Correlação = -0.11)**: Quando a taxa de juros sobe, o retorno tende a cair, ainda que de forma fraca.
+- **Volatilidade (Correlação = -0.04)**: É uma correlação muito fraca, quase nula, não podemos concluir nada.
+- **Risco (Correlação = 0.12)**: Por mais que seja fraca, pode sugerir que ativos considerados mais arriscados oferecem retornos ligeiramente maiores.
+
+
+### 3.2 Variável numérica em função de categórica
+Vamos agora analisar o boxplot da nossa variável alvo em relação com a única variável categórica do nosso dataset.
+
+```{r}
+library(ggplot2)
+
+# Boxplots para variáveis categóricas
+ggplot(dados_limpos, aes(x = Setor, y = Retorno)) +
+  geom_boxplot() + theme_minimal()
+```
+A seguir, a análise do boxplot:
+
+- Em termos de **mediana**, o setor de Tecnologia apresenta o melhor valor de Retorno.
+- O setor de Tecnologia apresenta uma distribuição de retornos mais simétrica, com a mediana centralizada e caudas equilibradas, ainda que haja alguns outliers inferiores.
+- O setor de consumo mostra uma assimetria, com a mediana ligeiramente deslocada e uma cauda superior mais longa.
+- Já o setor Financeiro apresenta uma distribuição bem parecida com o setor de tecnologia.
+
+Decidimos seguir com nossa análise deixando os outliers da nossa variável alvo pois, esse valores não decorrem de erros, mas sim de ativos que por motivos que não sabemos (como ventos econcômicos, noticias que afetam todo o mundo ou até mesmo oscilações adruptas do mercado), resultando assim em retornos acima ou abaixo da média.
+
+# 4. Análise de Regressão
+
+## 4.1 Análise de Multicolinearidade
+
+A seguir, iremos utilizar a função Variance Inflation Factor(VIF) para podermos identificar se existe multicolinearidade entre as variáveis.
+
+```{r}
+#install.packages("car")
+library(dplyr)
+library(car)
+modelo_vif <- lm(Retorno ~ Taxa_juros + Volatilidade + Liquidez + Volume + PE_ratio + Beta + Risco, data = dados_limpos)
+
+vif(modelo_vif)
+```
+
+Portanto, a partir da análise do VIF podemos tirar algumas conclusões sobre as nossas variáveis:
+
+- **Volatilidade e Risco**: Apresentam valores de VIF extremamente elevados (em torno de 1262), sugerindo uma **colinearidade severa** entre essas duas variáveis.
+
+- Demais Variáveis(Taxa_juros, Liquidez, Volume, PE_ratio, Beta): Possuem valores de VIF próximos de 1, o que indica **ausência de problemas de multicoliaridade**.
+
+Tendo em vista a alta colinearidade entre as variáveis Volatilidade e Risco, decidimos por escolher apenas uma delas na nossa base de dados, nesse caso o Risco, assim, vamos evitar distorções nos coeficientes e conseguimos aprimorar a estabilidade da nossa variável alvo.
+
+```{r}
+# Removendo a coluna "Volatilidade" do data frame
+library(dplyr)
+dados <- dados_limpos %>% select(-Volatilidade)
+head(dados)
+```
+
+## 4.2 Usando a função report()
+
+```{r}
+
+# Sem a variável que excluimos anteriormente
+modelo <- lm(Retorno ~ Taxa_juros + Liquidez + Volume + PE_ratio + Beta + Risco, data = dados)
+ 
+library(report)
+
+report(modelo)
+```
+
+# 5. Seleção de modelo
+## 5.1 Sem Setor x Com Setor
+### 5.1.1 Sem a variável Setor
+```{r}
+summary(modelo)
+```
+
+
+### 5.1.2 Com a variável Setor
+
+```{r}
+modelo_com_setor <- lm(Retorno ~ Taxa_juros + Liquidez + Volume + PE_ratio + Beta + Risco + Setor, data = dados)
+summary(modelo_com_setor)
+
+```
+
+```{r}
+AIC(modelo)
+```
+
+
+```{r}
+AIC(modelo_com_setor)
+```
+
+```{r}
+BIC(modelo)
+```
+
+```{r}
+BIC(modelo_com_setor)
+```
+
+Com os códigos acima, podemos tirar algumas conclusões sobre os modelos gerados:
+- O *modelo_com_setor* obteve um AIC maior comparado ao modelo sem a variável Setor.
+Dessa forma, podemos concluir que o modelo com setor é mais adequada pois ele se ajusta melhor aos dados.
+- Apesar do valor do BIC do modelo sem Setor ter sido menor, ou seja, um modelo mais simples, a diferença em relação ao modelo sem Setor é marginal.
+
+### 5.1.3 ANOVA para a comparação e seleção de modelos aninhados
+
+```{r}
+tabela_anova <- anova(modelo, modelo_com_setor)
+
+str(tabela_anova)
+```
+
+A tabela ANOVA nos trás a informação de qual modelo está mais ajustado aos dados
+comparando um mais simples (modelo sem setor) com um modelo mais complexo (modelo com setor).
+A variável que mais nos ajuda a identificar esse ajuste é o p-valor. No nosso caso, o p-valor
+deu um valor significantemente baixo ($p=0.0031$), isso significa que a diferença dos dois 
+modelos é estatísticamente significativa e a adição da variável `Setor` melhora
+o ajuste do modelo
+
+## 5.2 PE_Ratio? (Com Setor)
+```{r}
+mod_sem_pe_ratio <- update(modelo_com_setor, . ~ . - PE_ratio)
+
+summary(mod_sem_pe_ratio)
+```
+```{r}
+AIC(modelo_com_setor) # Com PE_ratio
+```
+
+```{r}
+AIC(mod_sem_pe_ratio) # Sem PE_ratio
+```
+
+```{r}
+BIC(modelo_com_setor) # Com PE_ratio
+```
+
+```{r}
+BIC(mod_sem_pe_ratio) # Sem PE_ratio
+```
+
+### Conclusão
+Como pode ser analisado, o modelo considerando a inclusão da variável `PE_ratio`
+se torna mais adequado, possuindo valores de AIC e BIC menores do que o modelo
+sem PE_ratio.
+
+# 6 Regressão Stepwise
+## 6.1 Seleção pelo método Step: "backward"
+```{r}
+intercept_only <- lm(Retorno ~ 1, data = dados)
+all <- lm(Retorno ~ ., data = dados)
+
+backward_intercept <- step(intercept_only, direction='backward', scope=formula(all), trace=1)
+backward <- step(all, direction='backward', scope=formula(all), trace=1)
+```
+
+```{r}
+backward$anova
+```
