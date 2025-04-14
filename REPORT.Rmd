@@ -185,7 +185,6 @@ head(dados)
 ## 4.2 Usando a função report()
 
 ```{r}
-
 # Sem a variável que excluimos anteriormente
 modelo <- lm(Retorno ~ Taxa_juros + Liquidez + Volume + PE_ratio + Beta + Risco, data = dados)
  
@@ -251,7 +250,7 @@ deu um valor significantemente baixo ($p=0.0031$), isso significa que a diferen�
 modelos é estatísticamente significativa e a adição da variável `Setor` melhora
 o ajuste do modelo
 
-## 5.2 PE_Ratio? (Com Setor)
+## 5.2 PE_Ratio? (Com Setor) SUBSTITUIR
 
 ```{r}
 mod_sem_pe_ratio <- update(modelo_com_setor, . ~ . - PE_ratio)
@@ -275,9 +274,7 @@ BIC(mod_sem_pe_ratio) # Sem PE_ratio
 ```
 
 ### Conclusão
-Como pode ser analisado, o modelo considerando a inclusão da variável `PE_ratio`
-se torna mais adequado, possuindo valores de AIC e BIC menores do que o modelo
-sem PE_ratio.
+Como pode ser analisado, o modelo considerando a inclusão da variável `PE_ratio` se torna mais adequado, possuindo valores de AIC e BIC menores do que o modelo sem PE_ratio.
 
 # 6 Regressão Stepwise
 
@@ -294,20 +291,6 @@ backward <- step(all, direction='backward', scope=formula(all), trace=1)
 A tabela acima mostra que o modelo com todas as variáveis é o melhor (menor AIC). Remover qualquer variável pioraria o ajuste, especialmente PE_ratio, Volume e Beta que têm os maiores impactos quando removidas.
 
 Isso confirma a análise anterior (na matriz de correlação) que identificou PE_ratio como a variável com maior correlação com Retorno (0.69).
-
-A seguir teríamos o histórico das etapas do processo de seleção backward stepwise. No entanto, como nenhuma variável foi removida, apenas o cabeçalho é informado na saída. De fato, se removêssemos alguma das variáveis, o AIC aumentaria, o que não melhoraria o modelo.
-
-
-```{r}
-backward$anova
-```
-
-Temos, a seguir, o modelo utilizando a técnica de stepwise backward.
-
-```{r}
-coeficientes <- backward$coefficients
-coeficientes
-```
 
 ## 6.2 Seleção pelo método Step: “forward”
 
@@ -327,20 +310,6 @@ forward <- step(intercept_only, direction='forward', scope=formula(all), trace=1
 
 Como podemos ver acima, a adição de todas as variáveis nos dá o menor valor de AIC (`AIC=2456.25`). Ou seja, assim como foi visto para o método anterior, se utilizarmos todas as variáveis, o modelo está melhor ajustado.
 
-
-Temos de maneira mais estruturada os passos tomados a seguir.
-
-```{r}
-forward$anova
-```
-
-Temos, a seguir, o modelo utilizando a técnica de stepwise backward.
-
-```{r}
-coeficientes <- forward$coefficients
-coeficientes
-```
-
 ## 6.3 Seleção pelo método Step: “both”
 
 A seguir utilizamos o método stepwise "both", que, passo a passo, adiciona e remove as variáveis uma a uma e verifica o valor AIC. Quanto menor o valor de AIC, melhor ajustado está o modelo.
@@ -356,17 +325,51 @@ all <- lm(Retorno ~ ., data=dados)
 both <- step(intercept_only, direction='both', scope=formula(all), trace=1)
 ```
 
-Para visualizar melhor os passos tomados, temos a tabela a seguir.
-
-```{r}
-both$anova
-```
-
 De fato, como vimos nos dois últimos métodos utilizados ("backward" e "forward"), se mantermos todas as variáveis do modelo, temos um IAC mínimo, o que nos dá o melhor modelo que esses métodos podem nos fornecer.
 
-Segue, então, o modelo utilizando a técnica de stepwise both.
+# 7 Análise de Resíduos / Checando pressupostos
+
+Análise de resíduos deve ser realizada sobre o modelo selecionado. Para nossa base de dados, o modelo `modelo_com_setor`.
+
+## 7.1 Checando pressupostos com R `base`
 
 ```{r}
-coeficientes <- both$coefficients
-coeficientes
+plot(modelo_com_setor)
 ```
+
+## 7.2 Checando pressupostos com o pacote `easystats`
+
+### 7.2.1 Sobre o modelo completo: `modelo`
+
+```{r}
+library(easystats)
+
+check_normality(modelo) #%>% plot()
+```
+
+O teste de normalidade indica um p-valor > 0.05, o que sugere que não há evidências fortes contra a normalidade dos resíduos. Isso é positivo, pois muitos testes inferenciais da regressão linear dependem dessa suposição.
+
+```{r}
+check_heteroscedasticity(modelo) #%>% plot()
+```
+
+O teste retorna um p-valor > 0.05, indicando que não há heteroscedasticidade significativa nos resíduos. A variância parece constante ao longo das predições.
+
+```{r}
+check_outliers(modelo) # %>% plot()
+```
+
+A função identifica alguns poucos outliers, mas nenhum com influência significativa o suficiente para distorcer os coeficientes do modelo.
+
+```{r}
+check_collinearity(modelo)
+```
+
+```{r}
+check_collinearity(modelo) %>% plot()
+```
+
+```{r}
+check_autocorrelation(modelo)
+```
+
