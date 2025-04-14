@@ -9,10 +9,24 @@ output: html_notebook
 
 
 # 1. Introdução
-A partir da base de dados “Mercado_Financeiro.xlsx” temos como objetivo investigar como os fatores influenciam a variável Retorno, que diz respeito ao ganho ou perda financeira obtida a partir de um investimento. Este conjunto de dados inclui diversas variáveis(listar variáveis) que iremos utilizar para traçar um regressão linear múltipla que explique o Retorno.
+A partir da base de dados “Mercado_Financeiro.xlsx” temos como objetivo investigar como os fatores influenciam a variável Retorno, que diz respeito ao ganho ou perda financeira obtida a partir de um investimento. Este conjunto de dados inclui diversas variáveis que iremos utilizar para traçar um regressão linear múltipla que explique o Retorno.
 
 # 2. Dados
-Os dados que trabalharemos dizem respeito ao mundo do mercado financeiro. Podemos carregá-los da seguinte forma: 
+
+## 2.1 Estrutura do conjunto de dados
+Os dados que trabalharemos dizem respeito ao mundo do mercado financeiro.
+
+- Taxa_juros: Taxa de juros associada ao investimento ou produto financeiro (em porcentagem).
+- Volatilidade: Medida de variação dos preços de um ativo ao longo do tempo, indicando risco de flutuações (em porcentagem).
+- Liquidez: Facilidade de converter um ativo em dinheiro sem impactar significativamente seu preço (valores percentuais).
+- Volume: Quantidade de negociações ou capital movimentado em um período específico (valor monetário).
+- PE_ratio: Razão Preço/Lucro, que compara o preço da ação com um lucro por ação (valor numérico).
+- Beta: Medida de risco sistemático, indicando correlação com o mercado (valores positivos/negativos refletem tendências).
+- Setor: Categoria do setor econômico do investimento (categórico: Financeiro, Tecnologia, Consumo).
+- Risco: Pontuação numérica que quantifica o risco associado ao investimento.
+- Retorno: Ganho ou perda financeira gerada pelo investimento (valor monetário).
+
+Podemos carregá-los da seguinte forma: 
 
 
 ```{r}
@@ -51,18 +65,6 @@ Aqui está uma visão geral de como está o nosso dataframe:
 ```{r}
 glimpse(dados)
 ```
-
-## 2.1 Estrutura do conjunto de dados
-
-- Taxa_juros: Taxa de juros associada ao investimento ou produto financeiro(em porcentagem).
-- Volatilidade: Medida de variação dos preços de um ativo ao longo do tempo, indicando risco de flutuações (em porcentagem).
-- Liquidez: Facilidade de converter um ativo em dinheiro sem impactar significativamente seu preço (valores percentuais).
-- Volume: Quantidade de negociações ou capital movimentado em um período específico (valor monetário).
-- PE_ratio: Razão Preço/Lucro, que compara o preço da ação com um lucro por ação (valor numérico).
-- Beta: Medida de risco sistemático, indicando correlação com o mercado (valores positivos/negativos refletem tendências).
-- Setor: Categoria do setor econômico do investimento (categórico: Financeiro, Tecnologia, Consumo).
-- Risco: Pontuação numérica que quantifica o risco associado ao investimento.
-- Retorno: Ganho ou perda financeira gerada pelo investimento (valor monetário).
 
 
 ## 2.2 Análise exploratória dos dados
@@ -193,8 +195,11 @@ report(modelo)
 ```
 
 # 5. Seleção de modelo
+
 ## 5.1 Sem Setor x Com Setor
+
 ### 5.1.1 Sem a variável Setor
+
 ```{r}
 summary(modelo)
 ```
@@ -226,9 +231,10 @@ BIC(modelo_com_setor)
 ```
 
 Com os códigos acima, podemos tirar algumas conclusões sobre os modelos gerados:
-- O *modelo_com_setor* obteve um AIC maior comparado ao modelo sem a variável Setor.
-Dessa forma, podemos concluir que o modelo com setor é mais adequada pois ele se ajusta melhor aos dados.
-- Apesar do valor do BIC do modelo sem Setor ter sido menor, ou seja, um modelo mais simples, a diferença em relação ao modelo sem Setor é marginal.
+
+* O *modelo_com_setor* obteve um AIC maior comparado ao modelo sem a variável Setor.
+* Dessa forma, podemos concluir que o modelo com setor é mais adequada pois ele se ajusta melhor aos dados.
+* Apesar do valor do BIC do modelo sem Setor ter sido menor, ou seja, um modelo mais simples, a diferença em relação ao modelo sem Setor é marginal.
 
 ### 5.1.3 ANOVA para a comparação e seleção de modelos aninhados
 
@@ -246,6 +252,7 @@ modelos é estatísticamente significativa e a adição da variável `Setor` mel
 o ajuste do modelo
 
 ## 5.2 PE_Ratio? (Com Setor)
+
 ```{r}
 mod_sem_pe_ratio <- update(modelo_com_setor, . ~ . - PE_ratio)
 
@@ -273,15 +280,93 @@ se torna mais adequado, possuindo valores de AIC e BIC menores do que o modelo
 sem PE_ratio.
 
 # 6 Regressão Stepwise
+
 ## 6.1 Seleção pelo método Step: "backward"
+
+A seguir utilizamos o método stepwise "backward", que, passo a passo, elimina as variáveis uma a uma e verifica o valor AIC. Quanto menor o valor de AIC, melhor ajustado está o modelo.
+
 ```{r}
 intercept_only <- lm(Retorno ~ 1, data = dados)
 all <- lm(Retorno ~ ., data = dados)
 
-backward_intercept <- step(intercept_only, direction='backward', scope=formula(all), trace=1)
 backward <- step(all, direction='backward', scope=formula(all), trace=1)
 ```
+A tabela acima mostra que o modelo com todas as variáveis é o melhor (menor AIC). Remover qualquer variável pioraria o ajuste, especialmente PE_ratio, Volume e Beta que têm os maiores impactos quando removidas.
+
+Isso confirma a análise anterior (na matriz de correlação) que identificou PE_ratio como a variável com maior correlação com Retorno (0.69).
+
+A seguir teríamos o histórico das etapas do processo de seleção backward stepwise. No entanto, como nenhuma variável foi removida, apenas o cabeçalho é informado na saída. De fato, se removêssemos alguma das variáveis, o AIC aumentaria, o que não melhoraria o modelo.
+
 
 ```{r}
 backward$anova
+```
+
+Temos, a seguir, o modelo utilizando a técnica de stepwise backward.
+
+```{r}
+coeficientes <- backward$coefficients
+coeficientes
+```
+
+## 6.2 Seleção pelo método Step: “forward”
+
+A seguir utilizamos o método stepwise "forward", que, passo a passo, adiciona as variáveis uma a uma e verifica o valor AIC. Quanto menor o valor de AIC, melhor ajustado está o modelo. Diferentemente do método anterior, é feita a adição em vez da remoção de variáveis. É importante analisar o uso dos dois métodos pois nem sempre eles convergem num mesmo resultado.
+
+```{r}
+# define intercept-only model
+intercept_only <- lm(Retorno ~ 1, data=dados)
+
+# define model with all predictors
+all <- lm(Retorno ~ ., data=dados)
+
+
+# forward stepwise regression
+forward <- step(intercept_only, direction='forward', scope=formula(all), trace=1)
+```
+
+Como podemos ver acima, a adição de todas as variáveis nos dá o menor valor de AIC (`AIC=2456.25`). Ou seja, assim como foi visto para o método anterior, se utilizarmos todas as variáveis, o modelo está melhor ajustado.
+
+
+Temos de maneira mais estruturada os passos tomados a seguir.
+
+```{r}
+forward$anova
+```
+
+Temos, a seguir, o modelo utilizando a técnica de stepwise backward.
+
+```{r}
+coeficientes <- forward$coefficients
+coeficientes
+```
+
+## 6.3 Seleção pelo método Step: “both”
+
+A seguir utilizamos o método stepwise "both", que, passo a passo, adiciona e remove as variáveis uma a uma e verifica o valor AIC. Quanto menor o valor de AIC, melhor ajustado está o modelo.
+
+```{r}
+# intercept-only model
+intercept_only <- lm(Retorno ~ 1, data=dados)
+
+# model with all predictors
+all <- lm(Retorno ~ ., data=dados)
+
+# both stepwise regression
+both <- step(intercept_only, direction='both', scope=formula(all), trace=1)
+```
+
+Para visualizar melhor os passos tomados, temos a tabela a seguir.
+
+```{r}
+both$anova
+```
+
+De fato, como vimos nos dois últimos métodos utilizados ("backward" e "forward"), se mantermos todas as variáveis do modelo, temos um IAC mínimo, o que nos dá o melhor modelo que esses métodos podem nos fornecer.
+
+Segue, então, o modelo utilizando a técnica de stepwise both.
+
+```{r}
+coeficientes <- both$coefficients
+coeficientes
 ```
