@@ -359,7 +359,7 @@ Considerando os gráficos acima, podemos perceber que existe multicolinearidade 
 
 Com base em toda a análise que realizamos, é possível concluir que o investidor deve considerar a variável `PE_Ratio` em seus investimentos. Isso porque essa variável mostrou maior correlação com o retorno de uma ativo financeiro.
 
-Ou seja, a razão preço/lucro, que compara o preço da ação com um lucro por ação, deve ter atenção dedobrada de um investidor caso ele queira ter retornos maiores.
+Ou seja, a razão preço/lucro, que compara o preço da ação com um lucro por ação, deve ter atenção redobrada de um investidor caso ele queira ter retornos maiores.
 
 # 7.2. O que não considerar num investimento?
 
