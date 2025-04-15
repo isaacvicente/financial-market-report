@@ -351,7 +351,13 @@ check_collinearity(modelo_final) %>% plot()
 ```
 
 #### 6.2.2.3 Conclusão
-Considerando os gráficos acima, podemos perceber que existe multicolinearidade na base de dados original, e isso pode atrapalhar a análise dos dados, pois o modelo não saberá distinguir quem tem uma influência maior. Por esse motivo, em seções anteriores, fizemos um estudo de qual das duas variáveis `Volatilidade` ou `Risco` deveriam ser removidas. Podemos perceber, a partir do gráfico da seção 6.2.2.2, que a multicolinearidade não existe mais depois de remover risco, deixando nosso modelo em um bom nível.
+Considerando os gráficos acima, podemos perceber que existe multicolinearidade 
+na base de dados original, e isso pode atrapalhar a análise dos dados, pois o 
+modelo não saberá distinguir quem tem uma influência maior. Por esse motivo, em 
+seções anteriores, fizemos um estudo de qual das duas variáveis `Volatilidade` 
+ou `Risco` deveriam ser removidas. Podemos perceber, a partir do gráfico da 
+seção 6.2.2.2, que a multicolinearidade não existe mais depois de remover `Risco`,
+deixando nosso modelo sem multicolinearidade.
 
 # 7 Conclusão
 
