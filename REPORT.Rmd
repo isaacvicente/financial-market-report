@@ -3,8 +3,12 @@ title: "R Notebook - Regrassão Linear Múltipla"
 output: html_notebook
 ---
 
-- Isaac Vicente de Medeiros Silva - 122110653\n
-- Winicius Allan Bezerra da Silva - 122110397\n
+### Autores:
+
+- Isaac Vicente de Medeiros Silva - 122110653
+
+- Winicius Allan Bezerra da Silva - 122110397
+
 - Ronaldd Feliph Matias Costa - 122110574
 
 
@@ -330,7 +334,7 @@ check_normality(modelo_final)
 
 #### 6.2.1.3 Conclusão
 
-A partir dos dados fornecidos anteriormente, podemos concluir que a normalidade do modelo continua com $valor-p$ maior. Isto significa que 
+A partir dos dados fornecidos anteriormente, podemos concluir que a normalidade do modelo continua com $valor-p$ maior. Isto significa que os resíduos do modelo segue distribuição normal, logo, os valores de $p$ e $IC$ são confiáveis para fazer inferências.
 
 ### 6.2.2 Multicolinearidade
 
@@ -347,6 +351,7 @@ check_collinearity(modelo_final) %>% plot()
 ```
 
 #### 6.2.2.3 Conclusão
+Considerando os gráficos acima, podemos perceber que existe multicolinearidade na base de dados original, e isso pode atrapalhar a análise dos dados, pois o modelo não saberá distinguir quem tem uma influência maior. Por esse motivo, em seções anteriores, fizemos um estudo de qual das duas variáveis `Volatilidade` ou `Risco` deveriam ser removidas. Podemos perceber, a partir do gráfico da seção 6.2.2.2, que a multicolinearidade não existe mais depois de remover risco, deixando nosso modelo em um bom nível.
 
 # 7 Conclusão
 
