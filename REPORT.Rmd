@@ -355,13 +355,15 @@ Considerando os gráficos acima, podemos perceber que existe multicolinearidade 
 
 # 7 Conclusão
 
-## 7.1 O que considerar num investimento?
+## 7.1 O que considerar em um investimento?
 
 Com base em toda a análise que realizamos, é possível concluir que o investidor deve considerar a variável `PE_Ratio` em seus investimentos. Isso porque essa variável mostrou maior correlação com o retorno de uma ativo financeiro.
 
 Ou seja, a razão preço/lucro, que compara o preço da ação com um lucro por ação, deve ter atenção redobrada de um investidor caso ele queira ter retornos maiores.
 
-# 7.2. O que não considerar num investimento?
+Além disso, usar a informação de qual setor o investimento pertence pode ajudar muito a inferir o retorno que ele trará. Perbemos em análises passadas que o setor pode influenciar no ajuste do modelo aos dados. 
+
+# 7.2. O que não considerar em um investimento?
 
 De maneira análoga, podemos concluir que o investidor não considere a variável `Risco`, mas sim `Volatilidade`. Isso porque essas duas variáveis tentam explicar o retorno de um ativo, o que pode, além de atrapalhar a análise estatística, o próprio investidor.
 
