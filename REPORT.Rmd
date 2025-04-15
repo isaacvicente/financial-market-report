@@ -351,6 +351,7 @@ check_collinearity(modelo_final) %>% plot()
 ```
 
 #### 6.2.2.3 Conclusão
+
 Considerando os gráficos acima, podemos perceber que existe multicolinearidade 
 na base de dados original, e isso pode atrapalhar a análise dos dados, pois o 
 modelo não saberá distinguir quem tem uma influência maior. Por esse motivo, em 
@@ -367,10 +368,12 @@ Com base em toda a análise que realizamos, é possível concluir que o investid
 
 Ou seja, a razão preço/lucro, que compara o preço da ação com um lucro por ação, deve ter atenção redobrada de um investidor caso ele queira ter retornos maiores.
 
-Além disso, usar a informação de qual setor o investimento pertence pode ajudar muito a inferir o retorno que ele trará. Perbemos em análises passadas que o setor pode influenciar no ajuste do modelo aos dados. 
+Além disso, usar a informação de qual setor o investimento pertence pode ajudar muito a inferir o retorno que ele trará. Perbemos em análises passadas que o setor pode influenciar no ajuste do modelo aos dados. De fato, o setor de tecnologia tem alta influência no retorno se comparado aos outros tipos de setores (financeiro e de consumo).
 
 # 7.2. O que não considerar em um investimento?
 
 De maneira análoga, podemos concluir que o investidor não considere a variável `Risco`, mas sim `Volatilidade`. Isso porque essas duas variáveis tentam explicar o retorno de um ativo, o que pode, além de atrapalhar a análise estatística, o próprio investidor.
 
 Isto é, a medida de variação dos preços de um ativo ao longo do tempo, indicando risco de flutuações é o que deve ser levado em conta.
+
+Variáveis como Liquidez e Taxa de juros mostraram relação inversa com os retornos, enquanto Risco e Volatilidade são redundantes — a última é suficiente para medir flutuações de preço.
